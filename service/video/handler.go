@@ -203,8 +203,8 @@ func (s *VideoImpl) PublishVideo(ctx context.Context, req *video.PublishVideoReq
 func (s *VideoImpl) GetPublishList(ctx context.Context, req *video.GetPublishListReq) (resp *video.GetPublishListResp, err error) {
 	var result []*videoItem
 	// 先查视频
-	err = Db.Model(&Video{}).Select(selects).Omit("Author").
-		Joins("left join favorites on favorites.video_id = videos.id").Where(
+	err = Db.Debug().Model(&Video{}).Select(selects).
+		Joins("left join favorites on favorites.video_id = videos.id and favorites.user_id= videos.author_id").Where(
 		"videos.author_id = ?", req.GetUserId()).Scan(&result).Error
 	resp = &video.GetPublishListResp{}
 	if err != nil {

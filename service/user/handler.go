@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/acmestack/gorm-plus/gplus"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"gorm.io/gorm"
@@ -21,8 +22,7 @@ var selects = []string{"users.id as id",
 	"users.signature as signature",
 	"users.total_favorited as total_favorited",
 	"users.work_count as work_count",
-	"users.favorite_count as favorite_count",
-	"follows.is_follow as is_follow"}
+	"users.favorite_count as favorite_count"}
 
 // CheckUser implements the UserImpl interface.
 func (s *UserImpl) CheckUser(ctx context.Context, req *user.CheckUserReq) (resp *user.CheckUserResp, err error) {
@@ -102,7 +102,7 @@ func (s *UserImpl) GetFollowList(ctx context.Context, req *user.GetFollowListReq
 	err = Db.Model(&Follow{}).Select(
 		selects).
 		Joins("inner join users on users.id = follows.follow_id").
-		Where("follows.follower_id = ?", req.GetUserId()).
+		Where("follows.follower_id = ? and follows.is_follow = true", req.GetUserId()).
 		Scan(&followList).Error
 	resp = &user.GetFollowListResp{}
 	if err != nil {
@@ -121,10 +121,12 @@ func (s *UserImpl) GetFollowList(ctx context.Context, req *user.GetFollowListReq
 // GetFollowerList implements the UserImpl interface.
 func (s *UserImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerListReq) (resp *user.GetFollowerListResp, err error) {
 	var followList []*user.GetUserInfoByUserIdResp
+	var newSelects = selects
+	newSelects = append(selects, fmt.Sprintf("( select is_follow from follows where follower_id = %d and follow_id = users.id) as is_follow", req.GetUserId()))
 	err = Db.Model(&Follow{}).Select(
-		selects).
+		newSelects).
 		Joins("inner join users on users.id = follows.follower_id").
-		Where("follows.follow_id = ?", req.GetUserId()).
+		Where("follows.follow_id = ? ", req.GetUserId()).
 		Scan(&followList).Error
 	resp = &user.GetFollowerListResp{}
 	if err != nil {
@@ -143,16 +145,19 @@ func (s *UserImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerLis
 // GetFriendList implements the UserImpl interface.
 func (s *UserImpl) GetFriendList(ctx context.Context, req *user.GetFriendListReq) (resp *user.GetFriendListResp, err error) {
 	var followList []*user.FriendUser
-	err = Db.Table("(?) as m, follows",
-		Db.Model(&Message{}).
-			Select("content as message,if(to_user_id = ?,0,1) as msgType", req.GetUserId()).
-			Where("from_user_id = ? or to_user_id = ?", req.GetUserId(), req.GetUserId()).
-			Order("created_at desc").
-			Limit(1)).Select(
-		selects,
+	var newSelects = selects
+	newSelects = append(selects, fmt.Sprintf("( select is_follow from follows where follower_id = %d and follow_id = users.id) as is_follow", req.GetUserId()))
+	err = Db.Debug().Model(&Message{}).Model(&Follow{}).Select(
+		newSelects,
 		"m.msgType",
 		"m.message").
 		Joins("inner join users on users.id = follows.follow_id").
+		Joins("left join (SELECT from_user_id, to_user_id, content as message, if(to_user_id = ?, 0, 1) as msgType "+
+			"FROM `messages`"+
+			"WHERE (from_user_id = ? or to_user_id = ?)"+
+			"AND `messages`.`deleted_at` IS NULL "+
+			"ORDER BY created_at desc "+
+			"LIMIT 1) as m on m.from_user_id = ? or m.to_user_id = ?", req.GetUserId(), req.GetUserId(), req.GetUserId(), req.GetUserId(), req.GetUserId()).
 		Where("follows.follower_id = ? and follows.is_mutual = true", req.GetUserId()).
 		Scan(&followList).
 		Error
@@ -242,7 +247,7 @@ func (s *UserImpl) UnFollowStatus(ctx context.Context, req *user.FollowReq) (res
 		resp.IsSuccess = false
 		return
 	}
-	err = Db.Model(&User{ID: req.GetFollowerId()}).UpdateColumn("follow_count", gorm.Expr("follower_count - 1")).Error
+	err = Db.Model(&User{ID: req.GetFollowerId()}).UpdateColumn("follow_count", gorm.Expr("follow_count - 1")).Error
 	if err != nil {
 		klog.CtxErrorf(ctx, "修改用户%d的关注数量错误，原因：%v", req.GetFollowerId(), err)
 		resp.IsSuccess = false
