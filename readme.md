@@ -18,7 +18,7 @@ git clone https://gitee.com/lhou/toktik.git
 ```
 2. 切换到当前分支
 ```
-git checkout  master
+git checkout  micro_service
 ```
 2.编译
 ```
