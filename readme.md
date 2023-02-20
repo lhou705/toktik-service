@@ -6,6 +6,7 @@
 本项目采用服务架构，使用[consul](https://www.consul.io/)作为注册中心，[kitex](https://www.cloudwego.io/zh/docs/kitex/)框架搭建。分为用户、通信、对象存储、网关、视频五个部分。其中网关部分使用[hertz](https://www.cloudwego.io/zh/docs/hertz/)搭建。
 文件存储使用腾讯云对象存储。视频封面在上传视频后自动生成。为了加快访问速度，还使用了cdn技术加速访问。
 
+已部署在服务器上。地址`htps://toktik.lhou.ltd/`
 
 ## 安装教程
 ### 必要使用环境安装
