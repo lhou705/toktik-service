@@ -33,6 +33,13 @@ func (f *FollowHandler) SetFollowStatus(ctx context.Context, c *app.RequestConte
 		hlog.CtxErrorf(ctx, "字段action_type验证错误，原因：%v", err)
 		return
 	}
+	if toUserId == c.GetInt64("id") {
+		c.JSON(http.StatusOK, common.BaseResponse{
+			StatusCode: common.ReqError,
+			StatusMsg:  "不能关注自己",
+		})
+		return
+	}
 	var resp *user.FollowResp
 	if actionType == 1 {
 		resp, err = client.UserClient.FollowStatus(ctx, &user.FollowReq{
