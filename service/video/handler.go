@@ -267,7 +267,7 @@ func (s *VideoImpl) SendComment(ctx context.Context, req *video.SendCommentReq) 
 
 // DeleteComment implements the VideoImpl interface.
 func (s *VideoImpl) DeleteComment(ctx context.Context, req *video.DeleteCommentReq) (resp *video.DeleteCommentResp, err error) {
-	err = Db.Model(&Comment{ID: req.GetCommentId(), VideoId: req.GetVideoId(), UserId: req.GetUserId()}).Error
+	err = Db.Delete(&Comment{}, &req.CommentId).Error
 	resp = &video.DeleteCommentResp{}
 	if err != nil {
 		klog.CtxErrorf(ctx, "删除用户%d给视频%d的评论失败，原因：%v", req.GetUserId(), req.GetVideoId(), err)
