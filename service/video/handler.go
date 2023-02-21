@@ -203,7 +203,7 @@ func (s *VideoImpl) PublishVideo(ctx context.Context, req *video.PublishVideoReq
 func (s *VideoImpl) GetPublishList(ctx context.Context, req *video.GetPublishListReq) (resp *video.GetPublishListResp, err error) {
 	var result []*videoItem
 	// 先查视频
-	err = Db.Debug().Model(&Video{}).Select(selects).
+	err = Db.Model(&Video{}).Select(selects).
 		Joins("left join favorites on favorites.video_id = videos.id and favorites.user_id= videos.author_id").Where(
 		"videos.author_id = ?", req.GetUserId()).Scan(&result).Error
 	resp = &video.GetPublishListResp{}
@@ -273,7 +273,7 @@ func (s *VideoImpl) DeleteComment(ctx context.Context, req *video.DeleteCommentR
 		klog.CtxErrorf(ctx, "删除用户%d给视频%d的评论失败，原因：%v", req.GetUserId(), req.GetVideoId(), err)
 		return resp, err
 	}
-	err = Db.Model(&Video{ID: req.GetVideoId()}).UpdateColumn("comment_count", gorm.Expr("follower_count - 1")).Error
+	err = Db.Model(&Video{ID: req.GetVideoId()}).UpdateColumn("comment_count", gorm.Expr("comment_count - 1")).Error
 	if err != nil {
 		klog.CtxErrorf(ctx, "修改视频%d的评论数量错误，原因：%v", req.GetVideoId(), err)
 		return
