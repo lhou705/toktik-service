@@ -21,7 +21,7 @@ var client *cosSdk.Client
 
 func main() {
 	// 读取配置文件
-	configFilePath := flag.String("config", "../config/cos.config.json", "配置文件路径")
+	configFilePath := flag.String("config", "../config/toktik_cos.config.json", "配置文件路径")
 	flag.Parse()
 	fmt.Println("使用配置文件：" + *configFilePath)
 	_, err := os.Stat(*configFilePath)
@@ -33,10 +33,12 @@ func main() {
 	NewClient(config.Cos.Addr, config.Cos.SecretID, config.Cos.SecretKey)
 	// 初始化注册中心
 	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr,consul.WithCheck(&api.AgentServiceCheck{}))
-	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
-		Address: config.Server.RegisterAddr,
-		Scheme:  "http",
-	})
+	check := &api.AgentServiceCheck{
+		Timeout:                        "5s",
+		Interval:                       "5s",
+		DeregisterCriticalServiceAfter: "1m",
+	}
+	r, err := consul.NewConsulRegister(config.Server.RegisterAddr, consul.WithCheck(check))
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

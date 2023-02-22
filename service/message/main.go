@@ -21,7 +21,7 @@ import (
 var Db *gorm.DB
 
 func main() {
-	configFilePath := flag.String("config", "../config/user.config.json", "配置文件路径")
+	configFilePath := flag.String("config", "../config/toktik_user.config.json", "配置文件路径")
 	flag.Parse()
 	fmt.Println("使用配置文件：" + *configFilePath)
 	_, err := os.Stat(*configFilePath)
@@ -31,10 +31,12 @@ func main() {
 	// 初始化注册中心
 	config := GetConfigFromFile(*configFilePath)
 	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
-	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
-		Address: config.Server.RegisterAddr,
-		Scheme:  "http",
-	})
+	check := &api.AgentServiceCheck{
+		Timeout:                        "5s",
+		Interval:                       "5s",
+		DeregisterCriticalServiceAfter: "1m",
+	}
+	r, err := consul.NewConsulRegister(config.Server.RegisterAddr, consul.WithCheck(check))
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

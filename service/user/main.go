@@ -20,7 +20,7 @@ import (
 var Db *gorm.DB
 
 func main() {
-	configFilePath := flag.String("config", "../config/user.config.json", "配置文件路径")
+	configFilePath := flag.String("config", "../config/toktik_user.config.json", "配置文件路径")
 	flag.Parse()
 	fmt.Println("使用配置文件：" + *configFilePath)
 	_, err := os.Stat(*configFilePath)

@@ -25,7 +25,7 @@ var cosClient cos.Client
 var config *Config
 
 func main() {
-	configFilePath := flag.String("config", "../config/video.config.json", "配置文件路径")
+	configFilePath := flag.String("config", "../config/toktik_video.config.json", "配置文件路径")
 	flag.Parse()
 	fmt.Println("使用配置文件：" + *configFilePath)
 	_, err := os.Stat(*configFilePath)

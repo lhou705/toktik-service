@@ -21,7 +21,12 @@ func initServer() {
 	if err != nil {
 		hlog.Fatalf("初始化网关微服务错误，原因:%v", err)
 	}
-	r := consul.NewConsulRegister(consulClient)
+	check := &consulApi.AgentServiceCheck{
+		Timeout:                        "10s",
+		Interval:                       "10s",
+		DeregisterCriticalServiceAfter: "1m",
+	}
+	r := consul.NewConsulRegister(consulClient, consul.WithCheck(check))
 	h = server.Default(
 		server.WithHostPorts(serverConf.Addr),
 		server.WithReadTimeout(serverConf.ReadTimeOut*time.Second),
