@@ -13,8 +13,10 @@ import (
 
 func initServer() {
 	serverConf := conf.Server
-	config := consulApi.DefaultConfig()
-	config.Address = conf.Consul.Addr
+	config := &consulApi.Config{
+		Address: conf.Consul.Addr,
+		Scheme:  "http",
+	}
 	consulClient, err := consulApi.NewClient(config)
 	if err != nil {
 		hlog.Fatalf("初始化网关微服务错误，原因:%v", err)

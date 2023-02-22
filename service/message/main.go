@@ -7,6 +7,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
+	"github.com/hashicorp/consul/api"
 	consul "github.com/kitex-contrib/registry-consul"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -29,7 +30,11 @@ func main() {
 	}
 	// 初始化注册中心
 	config := GetConfigFromFile(*configFilePath)
-	r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
+	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
+	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+		Address: config.Server.RegisterAddr,
+		Scheme:  "http",
+	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

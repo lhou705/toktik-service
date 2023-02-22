@@ -46,7 +46,7 @@ if [ "$1" == "web" ] || [ "$1" == "all" ]; then
   cd service/web
   echo "编译web模块"
   go build -o web
-  cp web $base/bin
+  mv web $base/bin
   echo "已完成video模块的编译"
   cd $base
 fi

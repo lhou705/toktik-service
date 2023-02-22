@@ -40,7 +40,7 @@ func addUserToList(ctx context.Context, source []*videoItem, followerId int64) [
 			CoverUrl:      item.CoverUrl,
 			FavoriteCount: item.FavoriteCount,
 			CommentCount:  item.CommentCount,
-			IsFavorite:    false,
+			IsFavorite:    item.IsFavorite,
 			Title:         item.Title,
 		}
 		if cache[item.ID] == nil {
@@ -102,9 +102,9 @@ func addUserToCommentList(ctx context.Context, source []*commentItem, followerId
 				"users.work_count as work_count",
 				"users.favorite_count as favorite_count",
 				"follows.is_follow as is_follow").
-				Joins("left join videos on videos.author_id = users.id").
-				Joins("left join follows on follows.follower_id = ? and follows.follow_id = videos.author_id", followerId).
-				Where("videos.id = ?", item.ID).
+				Joins("left join comments on comments.user_id = users.id").
+				Joins("left join follows on follows.follower_id = ? and follows.follow_id = comments.user_id", followerId).
+				Where("comments.id = ?", item.ID).
 				Scan(&user).Error
 			if err == nil || errors.Is(err, gorm.ErrRecordNotFound) {
 				cache[item.ID] = user
@@ -134,7 +134,7 @@ var selects = []string{"videos.id as id",
 func (s *VideoImpl) GetFeedList(ctx context.Context, req *video.GetFeedListReq) (resp *video.GetFeedListResp, err error) {
 	var result []*videoItem
 	where := "videos.created_at < ? "
-	err = Db.Model(&Video{}).Select(selects).
+	err = Db.Debug().Model(&Video{}).Select(selects).
 		Joins("left join favorites on favorites.video_id = videos.id and favorites.user_id = ?", req.GetUserId()).Where(
 		where, req.GetLastTime()).Order("videos.created_at desc").Scan(&result).Error
 	resp = &video.GetFeedListResp{}
@@ -271,6 +271,7 @@ func (s *VideoImpl) DeleteComment(ctx context.Context, req *video.DeleteCommentR
 	resp = &video.DeleteCommentResp{}
 	if err != nil {
 		klog.CtxErrorf(ctx, "删除用户%d给视频%d的评论失败，原因：%v", req.GetUserId(), req.GetVideoId(), err)
+		resp.IsSuccess = false
 		return resp, err
 	}
 	err = Db.Model(&Video{ID: req.GetVideoId()}).UpdateColumn("comment_count", gorm.Expr("comment_count - 1")).Error
@@ -287,7 +288,7 @@ func (s *VideoImpl) GetCommentListComment(ctx context.Context, req *video.GetCom
 	var commentList []*commentItem
 	resp = &video.GetCommentListResp{}
 	err = Db.Model(&Comment{}).Select("id,content,from_unixtime(created_at,'%m-%d') as create_date").
-		Where(&Comment{VideoId: req.GetVideoId()}).Order("created_at desc").Scan(&commentList).Error
+		Where("video_id = ?", req.GetVideoId()).Order("created_at desc").Scan(&commentList).Error
 	if err != nil {
 		klog.CtxErrorf(ctx, "查找视频%d的评论失败，原因：%v", req.GetVideoId(), err)
 		return resp, err
@@ -360,7 +361,7 @@ func (s *VideoImpl) UnFavoriteVideoStatus(ctx context.Context, req *video.Favori
 		klog.CtxErrorf(ctx, "修改用户%d的作品总赞数错误，原因：%v", v.AuthorId, err)
 		return resp, err
 	}
-	err = Db.Model(&User{ID: v.AuthorId}).UpdateColumn("favorite_count", gorm.Expr("favorite_count - 1")).Error
+	err = Db.Model(&User{ID: req.GetUserId()}).UpdateColumn("favorite_count", gorm.Expr("favorite_count - 1")).Error
 	if err != nil {
 		klog.CtxErrorf(ctx, "修改用户%d的作品总赞数错误，原因：%v", v.AuthorId, err)
 		return resp, err

@@ -6,6 +6,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
+	"github.com/hashicorp/consul/api"
 	consul "github.com/kitex-contrib/registry-consul"
 	cosSdk "github.com/tencentyun/cos-go-sdk-v5"
 	"net"
@@ -31,7 +32,11 @@ func main() {
 	config := GetConfigFromFile(*configFilePath)
 	NewClient(config.Cos.Addr, config.Cos.SecretID, config.Cos.SecretKey)
 	// 初始化注册中心
-	r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
+	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr,consul.WithCheck(&api.AgentServiceCheck{}))
+	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+		Address: config.Server.RegisterAddr,
+		Scheme:  "http",
+	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

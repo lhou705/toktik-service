@@ -232,6 +232,7 @@ func (v *VideoHandler) SendComment(ctx context.Context, c *app.RequestContext) {
 				StatusCode: common.Success,
 				StatusMsg:  "删除评论成功",
 			})
+			return
 		}
 		c.JSON(http.StatusOK, common.BaseResponse{
 			StatusCode: common.ReqError,
@@ -264,7 +265,7 @@ func (v *VideoHandler) GetCommentList(ctx context.Context, c *app.RequestContext
 		return
 	}
 	c.JSON(http.StatusOK, common.GetCommentList{
-		StatusCode:  http.StatusOK,
+		StatusCode:  common.Success,
 		StatusMsg:   "获取成功",
 		CommentList: resp.GetCommentList(),
 	})

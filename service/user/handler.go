@@ -22,7 +22,8 @@ var selects = []string{"users.id as id",
 	"users.signature as signature",
 	"users.total_favorited as total_favorited",
 	"users.work_count as work_count",
-	"users.favorite_count as favorite_count"}
+	"users.favorite_count as favorite_count",
+	"follows.is_follow as is_follow"}
 
 // CheckUser implements the UserImpl interface.
 func (s *UserImpl) CheckUser(ctx context.Context, req *user.CheckUserReq) (resp *user.CheckUserResp, err error) {
@@ -147,7 +148,7 @@ func (s *UserImpl) GetFriendList(ctx context.Context, req *user.GetFriendListReq
 	var followList []*user.FriendUser
 	var newSelects = selects
 	newSelects = append(selects, fmt.Sprintf("( select is_follow from follows where follower_id = %d and follow_id = users.id) as is_follow", req.GetUserId()))
-	err = Db.Debug().Model(&Message{}).Model(&Follow{}).Select(
+	err = Db.Model(&Message{}).Model(&Follow{}).Select(
 		newSelects,
 		"m.msgType",
 		"m.message").
@@ -210,7 +211,7 @@ func (s *UserImpl) FollowStatus(ctx context.Context, req *user.FollowReq) (resp 
 			Assign(map[string]any{
 				"is_mutual": true,
 			}).
-			FirstOrCreate(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId(), IsMutual: false}).Error
+			FirstOrCreate(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId(), IsMutual: true}).Error
 		if err != nil {
 			klog.CtxErrorf(ctx, "修改或创建用户%d->用户%d的互关关系错误，原因：%v", req.GetFollowerId(), req.GetFollowId(), err)
 			resp.IsSuccess = false
@@ -219,7 +220,7 @@ func (s *UserImpl) FollowStatus(ctx context.Context, req *user.FollowReq) (resp 
 		err = Db.Where(&Follow{FollowId: req.GetFollowerId(), FollowerId: req.GetFollowId()}).Assign(map[string]any{
 			"is_mutual": true,
 		}).
-			FirstOrCreate(&Follow{FollowId: req.GetFollowerId(), FollowerId: req.GetFollowId(), IsMutual: false}).Error
+			FirstOrCreate(&Follow{FollowId: req.GetFollowerId(), FollowerId: req.GetFollowId(), IsMutual: true}).Error
 		if err != nil {
 			klog.CtxErrorf(ctx, "修改或创建用户%d->用户%d的互关关系错误，原因：%v", req.GetFollowerId(), req.GetFollowId(), err)
 			resp.IsSuccess = false

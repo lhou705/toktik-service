@@ -8,6 +8,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
+	"github.com/hashicorp/consul/api"
 	consul "github.com/kitex-contrib/registry-consul"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -24,7 +25,7 @@ var cosClient cos.Client
 var config *Config
 
 func main() {
-	configFilePath := flag.String("config", "../config/user.config.json", "配置文件路径")
+	configFilePath := flag.String("config", "../config/video.config.json", "配置文件路径")
 	flag.Parse()
 	fmt.Println("使用配置文件：" + *configFilePath)
 	_, err := os.Stat(*configFilePath)
@@ -33,7 +34,16 @@ func main() {
 	}
 	// 初始化注册中心
 	conf := GetConfigFromFile(*configFilePath)
-	r, err := consul.NewConsulRegister(conf.Server.RegisterAddr)
+	check := &api.AgentServiceCheck{
+		Timeout:                        "5s",
+		Interval:                       "5s",
+		DeregisterCriticalServiceAfter: "1m",
+	}
+	r, err := consul.NewConsulRegister(conf.Server.RegisterAddr, consul.WithCheck(check))
+	//r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+	//	Address: conf.Server.RegisterAddr,
+	//	Scheme:  "http",
+	//})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}
