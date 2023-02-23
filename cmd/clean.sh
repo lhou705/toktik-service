@@ -2,7 +2,7 @@
 base=$(pwd)
 mkdir -p bin
 if [ "$1" == "cos" ] || [ "$1" == "all" ]; then
-  rm bin/cos
+  rm bin/toktik_cos
   echo "进入cos目录"
   cd service/cos
   echo "删除cos编译文件"
@@ -12,7 +12,7 @@ if [ "$1" == "cos" ] || [ "$1" == "all" ]; then
 fi
 
 if [ "$1" == "message" ] || [ "$1" == "all" ]; then
-  rm bin/message
+  rm bin/toktik_message
   echo "进入message目录"
   cd service/message
   echo "删除message编译文件"
@@ -22,7 +22,7 @@ if [ "$1" == "message" ] || [ "$1" == "all" ]; then
 fi
 
 if [ "$1" == "user" ] || [ "$1" == "all" ]; then
-  rm bin/user
+  rm bin/toktik_user
   echo "进入user目录"
   cd service/user
   echo "删除user编译文件"
@@ -32,7 +32,7 @@ if [ "$1" == "user" ] || [ "$1" == "all" ]; then
 fi
 
 if [ "$1" == "video" ] || [ "$1" == "all" ]; then
-  rm bin/video
+  rm bin/toktik_video
   echo "进入video目录"
   cd service/video
   echo "删除video编译文件"
@@ -42,7 +42,7 @@ if [ "$1" == "video" ] || [ "$1" == "all" ]; then
 fi
 
 if [ "$1" == "web" ] || [ "$1" == "all" ]; then
-  rm bin/web
+  rm bin/toktik_web
   echo "已完成web模块的清理"
   cd $base
 fi

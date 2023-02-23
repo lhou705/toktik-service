@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"time"
 	"toktik/service/message/kitex_gen/message/message"
@@ -31,12 +32,12 @@ func main() {
 	// 初始化注册中心
 	config := GetConfigFromFile(*configFilePath)
 	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
-	check := &api.AgentServiceCheck{
-		Timeout:                        "5s",
-		Interval:                       "5s",
-		DeregisterCriticalServiceAfter: "1m",
-	}
-	r, err := consul.NewConsulRegister(config.Server.RegisterAddr, consul.WithCheck(check))
+	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+		Address:    config.Server.RegisterAddr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      config.Server.Token,
+	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Message struct {
 	ID         int64 `gorm:"primarykey"`
-	CreatedAt  int64
+	CreatedAt  int64 `gorm:"autoCreateTime:milli"`
 	UpdatedAt  int64
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 	FromUserId int64

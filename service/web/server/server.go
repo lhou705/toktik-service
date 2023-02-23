@@ -7,6 +7,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/utils"
 	consulApi "github.com/hashicorp/consul/api"
 	"github.com/hertz-contrib/registry/consul"
+	"net/http"
 	"time"
 	"toktik/service/web/router"
 )
@@ -14,8 +15,10 @@ import (
 func initServer() {
 	serverConf := conf.Server
 	config := &consulApi.Config{
-		Address: conf.Consul.Addr,
-		Scheme:  "http",
+		Address:    conf.Consul.Addr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      conf.Consul.Token,
 	}
 	consulClient, err := consulApi.NewClient(config)
 	if err != nil {
@@ -24,7 +27,7 @@ func initServer() {
 	check := &consulApi.AgentServiceCheck{
 		Timeout:                        "10s",
 		Interval:                       "10s",
-		DeregisterCriticalServiceAfter: "1m",
+		DeregisterCriticalServiceAfter: "10s",
 	}
 	r := consul.NewConsulRegister(consulClient, consul.WithCheck(check))
 	h = server.Default(

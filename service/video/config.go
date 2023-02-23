@@ -26,6 +26,7 @@ type Server struct {
 	ReusePort        bool
 	RegisterAddr     string
 	Name             string
+	Token            string
 }
 
 type Cos struct {

@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"time"
 	"toktik/service/video/kitex_gen/cos/cos"
@@ -34,16 +35,12 @@ func main() {
 	}
 	// 初始化注册中心
 	conf := GetConfigFromFile(*configFilePath)
-	check := &api.AgentServiceCheck{
-		Timeout:                        "5s",
-		Interval:                       "5s",
-		DeregisterCriticalServiceAfter: "1m",
-	}
-	r, err := consul.NewConsulRegister(conf.Server.RegisterAddr, consul.WithCheck(check))
-	//r, err := consul.NewConsulRegisterWithConfig(&api.Config{
-	//	Address: conf.Server.RegisterAddr,
-	//	Scheme:  "http",
-	//})
+	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+		Address:    conf.Server.RegisterAddr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      conf.Server.Token,
+	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}
@@ -54,7 +51,7 @@ func main() {
 	}
 	initDatabase(conf.Mysql.GetDsnStr())
 	// 连接cos服务
-	initCosClient(conf.Cos.Name, conf.Server.RegisterAddr)
+	initCosClient(conf.Cos.Name, conf.Server.RegisterAddr, conf.Server.Token)
 	svr := video.NewServer(new(VideoImpl),
 		server.WithServiceAddr(addr),
 		server.WithReusePort(conf.Server.ReusePort),
@@ -82,8 +79,13 @@ func initDatabase(dsn string) {
 	Db = db
 }
 
-func initCosClient(name string, consulAddr string) {
-	r, err := consul.NewConsulResolver(consulAddr)
+func initCosClient(name string, consulAddr string, token string) {
+	r, err := consul.NewConsulResolverWithConfig(&api.Config{
+		Address:    consulAddr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      token,
+	})
 	if err != nil {
 		klog.Errorf("初始化注册中心失败，原因：%v", err)
 	}

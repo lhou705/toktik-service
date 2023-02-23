@@ -4,7 +4,10 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/discovery"
+	"github.com/hashicorp/consul/api"
 	consul "github.com/kitex-contrib/registry-consul"
+	"net/http"
+	"time"
 	"toktik/service/web/config"
 	"toktik/service/web/kitex_gen/message/message"
 	"toktik/service/web/kitex_gen/user/user"
@@ -16,7 +19,13 @@ var MessageClient message.Client
 var VideoClient video.Client
 
 func InitClient(clientConf config.Client, consulConf config.Consul) {
-	r, err := consul.NewConsulResolver(consulConf.Addr)
+	r, err := consul.NewConsulResolverWithConfig(&api.Config{
+		Address:    consulConf.Addr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      consulConf.Token,
+	})
+	//r, err := consul.NewConsulResolver(consulConf.Addr)
 	if err != nil {
 		hlog.Errorf("初始化注册中心失败，原因：%v", err)
 	}

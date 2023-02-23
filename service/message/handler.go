@@ -37,7 +37,7 @@ func (s *MessageImpl) GetMessageList(ctx context.Context, req *message.GetMessag
 	err = Db.Model(&Message{}).
 		Select("id", "to_user_id", "from_user_id", "content", "created_at as create_time").
 		Where("((from_user_id = ? and to_user_id = ?) or (from_user_id = ? and to_user_id = ?)) and (created_at > ? and created_at <= ? )",
-			req.GetFromUserId(), req.GetToUserId(), req.GetToUserId(), req.GetFromUserId(), req.GetPreMsgTime(), time.Now().Unix()).
+			req.GetFromUserId(), req.GetToUserId(), req.GetToUserId(), req.GetFromUserId(), req.GetPreMsgTime(), time.Now().Unix()*1000).
 		Find(&result).
 		Error
 	resp = &message.GetMessageListResp{}

@@ -12,6 +12,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net"
+	"net/http"
 	"os"
 	"time"
 	"toktik/service/user/kitex_gen/user/user"
@@ -29,10 +30,11 @@ func main() {
 	}
 	// 初始化注册中心
 	config := GetConfigFromFile(*configFilePath)
-	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr)
 	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
-		Address: config.Server.RegisterAddr,
-		Scheme:  "http",
+		Address:    config.Server.RegisterAddr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      config.Server.Token,
 	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)

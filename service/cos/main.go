@@ -32,13 +32,12 @@ func main() {
 	config := GetConfigFromFile(*configFilePath)
 	NewClient(config.Cos.Addr, config.Cos.SecretID, config.Cos.SecretKey)
 	// 初始化注册中心
-	//r, err := consul.NewConsulRegister(config.Server.RegisterAddr,consul.WithCheck(&api.AgentServiceCheck{}))
-	check := &api.AgentServiceCheck{
-		Timeout:                        "5s",
-		Interval:                       "5s",
-		DeregisterCriticalServiceAfter: "1m",
-	}
-	r, err := consul.NewConsulRegister(config.Server.RegisterAddr, consul.WithCheck(check))
+	r, err := consul.NewConsulRegisterWithConfig(&api.Config{
+		Address:    config.Server.RegisterAddr,
+		Scheme:     "http",
+		HttpClient: &http.Client{Timeout: 3 * time.Second},
+		Token:      config.Server.Token,
+	})
 	if err != nil {
 		klog.Fatalf("初始化注册中心失败。错误原因：%v", err)
 	}

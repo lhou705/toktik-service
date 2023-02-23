@@ -32,7 +32,8 @@ type JWT struct {
 }
 
 type Consul struct {
-	Addr string
+	Addr  string
+	Token string
 }
 
 type Client struct {
