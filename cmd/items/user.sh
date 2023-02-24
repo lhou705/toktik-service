@@ -1,4 +1,4 @@
-message.sh#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 APP_NAME=toktik_user
 

@@ -166,15 +166,16 @@ func (s *VideoImpl) PublishVideo(ctx context.Context, req *video.PublishVideoReq
 
 	playKey := fmt.Sprintf("play/%d%s", time.Now().Unix(), path.Ext(req.GetFileName()))
 	coverKey := fmt.Sprintf("cover/%d.jpg", time.Now().Unix())
-	go func() {
-		res, err := cosClient.Upload(ctx, &cos.UploadReq{
-			File: req.GetData(),
-			Key:  playKey,
-		})
-		if err != nil || !res.GetIsSuccess() {
-			klog.CtxErrorf(ctx, "上传用户%d视频%s失败，原因：%v", req.GetUserId(), req.GetTitle(), err)
-		}
-	}()
+	res, err := cosClient.Upload(ctx, &cos.UploadReq{
+		File: req.GetData(),
+		Key:  playKey,
+	})
+	resp = &video.PublishVideoResp{}
+	if err != nil || !res.GetIsSuccess() {
+		resp.IsSuccess = false
+		klog.CtxErrorf(ctx, "上传用户%d视频%s失败，原因：%v", req.GetUserId(), req.GetTitle(), err)
+		return resp, err
+	}
 	klog.CtxInfof(ctx, "上传视频%s成功", playKey)
 	// 创建记录
 	err = Db.Create(&Video{
