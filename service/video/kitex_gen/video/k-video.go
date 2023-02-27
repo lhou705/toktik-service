@@ -1721,12 +1721,12 @@ ReadStructEndError:
 func (p *PublishVideoReq) FastReadField1(buf []byte) (int, error) {
 	offset := 0
 
-	if v, l, err := bthrift.Binary.ReadBinary(buf[offset:]); err != nil {
+	if v, l, err := bthrift.Binary.ReadString(buf[offset:]); err != nil {
 		return offset, err
 	} else {
 		offset += l
 
-		p.Data = []byte(v)
+		p.PlayKey = v
 
 	}
 	return offset, nil
@@ -1768,7 +1768,7 @@ func (p *PublishVideoReq) FastReadField4(buf []byte) (int, error) {
 	} else {
 		offset += l
 
-		p.FileName = v
+		p.CoverKey = v
 
 	}
 	return offset, nil
@@ -1809,8 +1809,8 @@ func (p *PublishVideoReq) BLength() int {
 
 func (p *PublishVideoReq) fastWriteField1(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "data", thrift.STRING, 1)
-	offset += bthrift.Binary.WriteBinaryNocopy(buf[offset:], binaryWriter, []byte(p.Data))
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "play_key", thrift.STRING, 1)
+	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.PlayKey)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1836,8 +1836,8 @@ func (p *PublishVideoReq) fastWriteField3(buf []byte, binaryWriter bthrift.Binar
 
 func (p *PublishVideoReq) fastWriteField4(buf []byte, binaryWriter bthrift.BinaryWriter) int {
 	offset := 0
-	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "file_name", thrift.STRING, 4)
-	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.FileName)
+	offset += bthrift.Binary.WriteFieldBegin(buf[offset:], "cover_key", thrift.STRING, 4)
+	offset += bthrift.Binary.WriteStringNocopy(buf[offset:], binaryWriter, p.CoverKey)
 
 	offset += bthrift.Binary.WriteFieldEnd(buf[offset:])
 	return offset
@@ -1845,8 +1845,8 @@ func (p *PublishVideoReq) fastWriteField4(buf []byte, binaryWriter bthrift.Binar
 
 func (p *PublishVideoReq) field1Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("data", thrift.STRING, 1)
-	l += bthrift.Binary.BinaryLengthNocopy([]byte(p.Data))
+	l += bthrift.Binary.FieldBeginLength("play_key", thrift.STRING, 1)
+	l += bthrift.Binary.StringLengthNocopy(p.PlayKey)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l
@@ -1872,8 +1872,8 @@ func (p *PublishVideoReq) field3Length() int {
 
 func (p *PublishVideoReq) field4Length() int {
 	l := 0
-	l += bthrift.Binary.FieldBeginLength("file_name", thrift.STRING, 4)
-	l += bthrift.Binary.StringLengthNocopy(p.FileName)
+	l += bthrift.Binary.FieldBeginLength("cover_key", thrift.STRING, 4)
+	l += bthrift.Binary.StringLengthNocopy(p.CoverKey)
 
 	l += bthrift.Binary.FieldEndLength()
 	return l

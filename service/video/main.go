@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/acmestack/gorm-plus/gplus"
-	"github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
@@ -17,12 +16,10 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"toktik/service/video/kitex_gen/cos/cos"
 	"toktik/service/video/kitex_gen/video/video"
 )
 
 var Db *gorm.DB
-var cosClient cos.Client
 var config *Config
 
 func main() {
@@ -50,8 +47,6 @@ func main() {
 		klog.Fatalf("创建链接监听失败。错误原因：%v", err)
 	}
 	initDatabase(conf.Mysql.GetDsnStr())
-	// 连接cos服务
-	initCosClient(conf.Cos.Name, conf.Server.RegisterAddr, conf.Server.Token)
 	svr := video.NewServer(new(VideoImpl),
 		server.WithServiceAddr(addr),
 		server.WithReusePort(conf.Server.ReusePort),
@@ -77,21 +72,4 @@ func initDatabase(dsn string) {
 	}
 	gplus.Init(db)
 	Db = db
-}
-
-func initCosClient(name string, consulAddr string, token string) {
-	r, err := consul.NewConsulResolverWithConfig(&api.Config{
-		Address:    consulAddr,
-		Scheme:     "http",
-		HttpClient: &http.Client{Timeout: 3 * time.Second},
-		Token:      token,
-	})
-	if err != nil {
-		klog.Errorf("初始化注册中心失败，原因：%v", err)
-	}
-	newClient, err := cos.NewClient(name, client.WithResolver(r))
-	if err != nil {
-		klog.Errorf("初始化信息服务失败，原因：%v", err)
-	}
-	cosClient = newClient
 }

@@ -40,10 +40,17 @@ type Client struct {
 	User    BaseClient
 	Message BaseClient
 	Video   BaseClient
+	Cos     CosClient
 }
 
 type BaseClient struct {
 	Name string
+}
+
+type CosClient struct {
+	Addr      string
+	SecretID  string
+	SecretKey string
 }
 
 func GetConfigFromFile(filename string) *Config {

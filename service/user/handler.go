@@ -146,22 +146,31 @@ func (s *UserImpl) GetFollowerList(ctx context.Context, req *user.GetFollowerLis
 // GetFriendList implements the UserImpl interface.
 func (s *UserImpl) GetFriendList(ctx context.Context, req *user.GetFriendListReq) (resp *user.GetFriendListResp, err error) {
 	var followList []*user.FriendUser
-	var newSelects = selects
-	newSelects = append(selects, fmt.Sprintf("( select is_follow from follows where follower_id = %d and follow_id = users.id) as is_follow", req.GetUserId()))
-	err = Db.Model(&Message{}).Model(&Follow{}).Select(
-		newSelects,
-		"m.msgType",
-		"m.message").
+	// 好友列表
+	err = Db.Model(&Follow{}).Select(
+		selects).
 		Joins("inner join users on users.id = follows.follow_id").
-		Joins("left join (SELECT from_user_id, to_user_id, content as message, if(to_user_id = ?, 0, 1) as msgType "+
-			"FROM `messages`"+
-			"WHERE (from_user_id = ? or to_user_id = ?)"+
-			"AND `messages`.`deleted_at` IS NULL "+
-			"ORDER BY created_at desc "+
-			"LIMIT 1) as m on m.from_user_id = ? or m.to_user_id = ?", req.GetUserId(), req.GetUserId(), req.GetUserId(), req.GetUserId(), req.GetUserId()).
 		Where("follows.follower_id = ? and follows.is_mutual = true", req.GetUserId()).
 		Scan(&followList).
 		Error
+	// 消息添加
+
+	for _, follow := range followList {
+		var message struct {
+			Message string
+			MsgType int64
+		}
+		err := Db.Model(&Message{}).Select("if(to_user_id = ?,0,1) as msg_type,content as message", req.GetUserId()).
+			Where("(from_user_id = ? and to_user_id = ? ) or (from_user_id = ? and to_user_id = ?)", req.GetUserId(), follow.Id, follow.Id, req.GetUserId()).
+			Order("created_at desc").Limit(1).Scan(&message).Error
+		if err == nil || errors.Is(err, gorm.ErrRecordNotFound) {
+			follow.Message = message.Message
+			follow.MsgType = message.MsgType
+			continue
+		} else {
+			klog.CtxErrorf(ctx, "查找用户%d与用户%d的聊天记录出错，原因：%v", req.GetUserId(), follow.Id, err)
+		}
+	}
 	resp = &user.GetFriendListResp{}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

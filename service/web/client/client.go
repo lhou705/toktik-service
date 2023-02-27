@@ -8,6 +8,7 @@ import (
 	consul "github.com/kitex-contrib/registry-consul"
 	"net/http"
 	"time"
+	"toktik/service/web/client/cos"
 	"toktik/service/web/config"
 	"toktik/service/web/kitex_gen/message/message"
 	"toktik/service/web/kitex_gen/user/user"
@@ -17,6 +18,7 @@ import (
 var UserClient user.Client
 var MessageClient message.Client
 var VideoClient video.Client
+var CosClient cos.Client
 
 func InitClient(clientConf config.Client, consulConf config.Consul) {
 	r, err := consul.NewConsulResolverWithConfig(&api.Config{
@@ -32,7 +34,7 @@ func InitClient(clientConf config.Client, consulConf config.Consul) {
 	initUserClient(clientConf.User.Name, r)
 	initMessageClient(clientConf.Message.Name, r)
 	initVideoClient(clientConf.Video.Name, r)
-
+	initCosClient(clientConf)
 }
 
 func initUserClient(name string, r discovery.Resolver) {
@@ -57,4 +59,8 @@ func initVideoClient(name string, r discovery.Resolver) {
 		hlog.Errorf("初始化视频服务失败，原因：%v", err)
 	}
 	VideoClient = videoClient
+}
+
+func initCosClient(conf config.Client) {
+	CosClient = cos.NewClient(conf.Cos.Addr, conf.Cos.SecretID, conf.Cos.SecretKey)
 }

@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
-	"io"
 	"net/http"
+	"path"
 	"strconv"
 	"time"
 	"toktik/service/web/client"
@@ -283,29 +284,35 @@ func (v *VideoHandler) Publish(ctx context.Context, c *app.RequestContext) {
 		hlog.CtxErrorf(ctx, "获取用户%d投递的文件%s错误%v", userId, title, err)
 		return
 	}
-	fileContent, err := data.Open()
-	if err != nil {
-		c.JSON(http.StatusOK, common.BaseResponse{
-			StatusCode: common.InvalidFiledType,
-			StatusMsg:  "读取文件错误",
-		})
-		hlog.CtxErrorf(ctx, "读取用户%d投递的文件%s错误%v", userId, title, err)
-		return
-	}
-	byteContent, err := io.ReadAll(fileContent)
-	if err != nil {
-		c.JSON(http.StatusOK, common.BaseResponse{
-			StatusCode: common.InvalidFiledType,
-			StatusMsg:  "解析文件错误",
-		})
-		hlog.CtxErrorf(ctx, "解析用户%d投递的文件%s错误%v", userId, title, err)
-		return
-	}
+	filename := fmt.Sprintf("%d%s", time.Now().Unix(), path.Ext(data.Filename))
+	playKey := fmt.Sprintf("play/" + filename)
+	coverKey := fmt.Sprintf("cover/%d.jpg", time.Now().Unix())
+	go func() {
+		err = c.SaveUploadedFile(data, "/tmp/"+filename)
+		if err != nil {
+			c.JSON(http.StatusOK, common.BaseResponse{
+				StatusCode: common.ReqError,
+				StatusMsg:  "上传文件错误",
+			})
+			hlog.CtxErrorf(ctx, "上传用户%d投递的文件%s错误%v", userId, title, err)
+			return
+		}
+		_, _, err = client.CosClient.C.Object.Upload(ctx, playKey, "/tmp/"+filename, nil)
+		//err = client.CosClient.Upload(ctx, playKey, data)
+		if err != nil {
+			c.JSON(http.StatusOK, common.BaseResponse{
+				StatusCode: common.ReqError,
+				StatusMsg:  "上传文件错误",
+			})
+			hlog.CtxErrorf(ctx, "上传用户%d投递的文件%s错误%v", userId, title, err)
+			return
+		}
+	}()
 	resp, err := client.VideoClient.PublishVideo(ctx, &video.PublishVideoReq{
-		Data:     byteContent,
 		Title:    title,
 		UserId:   userId,
-		FileName: data.Filename,
+		PlayKey:  playKey,
+		CoverKey: coverKey,
 	})
 	if err != nil || !resp.GetIsSuccess() {
 		c.JSON(http.StatusOK, common.BaseResponse{

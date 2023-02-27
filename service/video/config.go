@@ -30,7 +30,6 @@ type Server struct {
 }
 
 type Cos struct {
-	Name    string
 	CdnAddr string
 }
 

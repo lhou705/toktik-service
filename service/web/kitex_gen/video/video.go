@@ -3,7 +3,6 @@
 package video
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
@@ -1985,10 +1984,10 @@ func (p *PublishVideoResp) Field1DeepEqual(src bool) bool {
 }
 
 type PublishVideoReq struct {
-	Data     []byte `thrift:"data,1" frugal:"1,default,binary" json:"data"`
+	PlayKey  string `thrift:"play_key,1" frugal:"1,default,string" json:"play_key"`
 	Title    string `thrift:"title,2" frugal:"2,default,string" json:"title"`
 	UserId   int64  `thrift:"user_id,3" frugal:"3,default,i64" json:"user_id"`
-	FileName string `thrift:"file_name,4" frugal:"4,default,string" json:"file_name"`
+	CoverKey string `thrift:"cover_key,4" frugal:"4,default,string" json:"cover_key"`
 }
 
 func NewPublishVideoReq() *PublishVideoReq {
@@ -1999,8 +1998,8 @@ func (p *PublishVideoReq) InitDefault() {
 	*p = PublishVideoReq{}
 }
 
-func (p *PublishVideoReq) GetData() (v []byte) {
-	return p.Data
+func (p *PublishVideoReq) GetPlayKey() (v string) {
+	return p.PlayKey
 }
 
 func (p *PublishVideoReq) GetTitle() (v string) {
@@ -2011,11 +2010,11 @@ func (p *PublishVideoReq) GetUserId() (v int64) {
 	return p.UserId
 }
 
-func (p *PublishVideoReq) GetFileName() (v string) {
-	return p.FileName
+func (p *PublishVideoReq) GetCoverKey() (v string) {
+	return p.CoverKey
 }
-func (p *PublishVideoReq) SetData(val []byte) {
-	p.Data = val
+func (p *PublishVideoReq) SetPlayKey(val string) {
+	p.PlayKey = val
 }
 func (p *PublishVideoReq) SetTitle(val string) {
 	p.Title = val
@@ -2023,15 +2022,15 @@ func (p *PublishVideoReq) SetTitle(val string) {
 func (p *PublishVideoReq) SetUserId(val int64) {
 	p.UserId = val
 }
-func (p *PublishVideoReq) SetFileName(val string) {
-	p.FileName = val
+func (p *PublishVideoReq) SetCoverKey(val string) {
+	p.CoverKey = val
 }
 
 var fieldIDToName_PublishVideoReq = map[int16]string{
-	1: "data",
+	1: "play_key",
 	2: "title",
 	3: "user_id",
-	4: "file_name",
+	4: "cover_key",
 }
 
 func (p *PublishVideoReq) Read(iprot thrift.TProtocol) (err error) {
@@ -2124,10 +2123,10 @@ ReadStructEndError:
 }
 
 func (p *PublishVideoReq) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadBinary(); err != nil {
+	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.Data = []byte(v)
+		p.PlayKey = v
 	}
 	return nil
 }
@@ -2154,7 +2153,7 @@ func (p *PublishVideoReq) ReadField4(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		p.FileName = v
+		p.CoverKey = v
 	}
 	return nil
 }
@@ -2201,10 +2200,10 @@ WriteStructEndError:
 }
 
 func (p *PublishVideoReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("data", thrift.STRING, 1); err != nil {
+	if err = oprot.WriteFieldBegin("play_key", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteBinary([]byte(p.Data)); err != nil {
+	if err := oprot.WriteString(p.PlayKey); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -2252,10 +2251,10 @@ WriteFieldEndError:
 }
 
 func (p *PublishVideoReq) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("file_name", thrift.STRING, 4); err != nil {
+	if err = oprot.WriteFieldBegin("cover_key", thrift.STRING, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.FileName); err != nil {
+	if err := oprot.WriteString(p.CoverKey); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -2281,7 +2280,7 @@ func (p *PublishVideoReq) DeepEqual(ano *PublishVideoReq) bool {
 	} else if p == nil || ano == nil {
 		return false
 	}
-	if !p.Field1DeepEqual(ano.Data) {
+	if !p.Field1DeepEqual(ano.PlayKey) {
 		return false
 	}
 	if !p.Field2DeepEqual(ano.Title) {
@@ -2290,15 +2289,15 @@ func (p *PublishVideoReq) DeepEqual(ano *PublishVideoReq) bool {
 	if !p.Field3DeepEqual(ano.UserId) {
 		return false
 	}
-	if !p.Field4DeepEqual(ano.FileName) {
+	if !p.Field4DeepEqual(ano.CoverKey) {
 		return false
 	}
 	return true
 }
 
-func (p *PublishVideoReq) Field1DeepEqual(src []byte) bool {
+func (p *PublishVideoReq) Field1DeepEqual(src string) bool {
 
-	if bytes.Compare(p.Data, src) != 0 {
+	if strings.Compare(p.PlayKey, src) != 0 {
 		return false
 	}
 	return true
@@ -2319,7 +2318,7 @@ func (p *PublishVideoReq) Field3DeepEqual(src int64) bool {
 }
 func (p *PublishVideoReq) Field4DeepEqual(src string) bool {
 
-	if strings.Compare(p.FileName, src) != 0 {
+	if strings.Compare(p.CoverKey, src) != 0 {
 		return false
 	}
 	return true

@@ -1,15 +1,7 @@
 #!/usr/bin/env bash
 base=$(pwd)
 mkdir -p bin
-if [ "$1" == "cos" ] || [ "$1" == "all" ]; then
-  rm bin/toktik_cos
-  echo "进入cos目录"
-  cd service/cos
-  echo "删除cos编译文件"
-  rm -rf output
-  echo "已完成cos模块的清理"
-  cd $base
-fi
+
 
 if [ "$1" == "message" ] || [ "$1" == "all" ]; then
   rm bin/toktik_message

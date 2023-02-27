@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
 base=$(pwd)
 mkdir -p bin
-if [ "$1" == "cos" ] || [ "$1" == "all" ]; then
-  echo "进入cos目录"
-  cd service/cos
-  echo "编译cos模块"
-  sh build.sh
-  cp output/bin/cos $base/bin/toktik_cos
-  echo "已完成cos模块的编译"
-  cd $base
-fi
 
 if [ "$1" == "user" ] || [ "$1" == "all" ]; then
   echo "进入user目录"

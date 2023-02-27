@@ -52,10 +52,10 @@ struct PublishVideoResp {
 }
 
 struct PublishVideoReq {
-1:binary data
+1:string play_key
 2:string title
 3:i64 user_id
-4:string file_name
+4:string cover_key
 }
 
 struct GetPublishListResp {
