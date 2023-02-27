@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/acmestack/gorm-plus/gplus"
 	"github.com/cloudwego/kitex/pkg/klog"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"toktik/service/user/kitex_gen/user"
 )
@@ -28,11 +29,16 @@ var selects = []string{"users.id as id",
 // CheckUser implements the UserImpl interface.
 func (s *UserImpl) CheckUser(ctx context.Context, req *user.CheckUserReq) (resp *user.CheckUserResp, err error) {
 	query, model := gplus.NewQuery[User]()
-	query.Eq(&model.Name, req.GetUsername()).Eq(&model.Password, req.Password).Select(&model.Name, &model.ID)
+	query.Eq(&model.Name, req.GetUsername()).Select(&model.Password, &model.Name, &model.ID)
 	result, db := gplus.SelectOne(query)
 	if db.Error != nil {
 		klog.CtxErrorf(ctx, "查找用户失败，原因%v", db.Error)
 		return nil, db.Error
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(req.GetPassword())) //验证（对比）
+	if err != nil {
+		klog.CtxErrorf(ctx, "校验用户失败，原因%v", db.Error)
+		return nil, err
 	}
 	resp = &user.CheckUserResp{Username: result.Name, UserId: result.ID}
 	return resp, nil
@@ -47,12 +53,17 @@ func (s *UserImpl) CreateUser(ctx context.Context, req *user.RegisterUserReq) (r
 	if db.Error != nil && !errors.Is(db.Error, gorm.ErrRecordNotFound) {
 		return nil, errors.New("此用户已存在")
 	}
-	db = gplus.Insert(&User{Name: req.GetUsername(), Password: req.GetPassword()})
+	password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		klog.CtxErrorf(ctx, "创建用户失败，原因%v", db.Error)
+		return nil, db.Error
+	}
+	db = gplus.Insert(&User{Name: req.GetUsername(), Password: string(password)})
 	if db.Error != nil {
 		klog.CtxErrorf(ctx, "创建用户失败，原因%v", db.Error)
 		return nil, db.Error
 	}
-	query.Eq(&model.Name, req.GetUsername()).Eq(&model.Password, req.Password).Select(&model.Name, &model.ID)
+	query.Eq(&model.Name, req.GetUsername()).Eq(&model.Password, string(password)).Select(&model.Name, &model.ID)
 	result, db := gplus.SelectOne(query)
 	if db.Error != nil {
 		klog.CtxErrorf(ctx, "查找用户失败，原因%v", db.Error)
