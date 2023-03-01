@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"net/http"
@@ -71,6 +72,12 @@ func (f *FollowHandler) SetFollowStatus(ctx context.Context, c *app.RequestConte
 			StatusMsg:  "取消成功",
 		})
 		return
+	}
+	if errors.Is(err, errors.New("不能重复取消关注")) || errors.Is(err, errors.New("不能重复关注")) {
+		c.JSON(http.StatusOK, common.BaseResponse{
+			StatusCode: common.ReqError,
+			StatusMsg:  err.Error(),
+		})
 	}
 	c.JSON(http.StatusOK, common.BaseResponse{
 		StatusCode: common.ReqError,

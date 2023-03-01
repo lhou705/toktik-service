@@ -281,10 +281,22 @@ func (s *VideoImpl) GetCommentListComment(ctx context.Context, req *video.GetCom
 
 // FavoriteVideoStatus implements the VideoImpl interface.
 func (s *VideoImpl) FavoriteVideoStatus(ctx context.Context, req *video.FavoriteVideoReq) (resp *video.FavoriteVideoResp, err error) {
+	var f Favorite
+	resp = &video.FavoriteVideoResp{}
+	err = Db.Where(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId()}).First(&f).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		klog.CtxErrorf(ctx, "修改或创建用户%d->视频%d的点赞错误，原因：%v", req.GetUserId(), req.GetVideoId(), err)
+		resp.IsSuccess = false
+		return
+	}
+	if f.IsFavorite {
+		resp.IsSuccess = false
+		return resp, errors.New("不能重复点赞")
+	}
 	err = Db.Where(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId()}).Assign(map[string]any{
 		"is_favorite": true,
 	}).FirstOrCreate(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId(), IsFavorite: true}).Error
-	resp = &video.FavoriteVideoResp{}
+
 	if err != nil {
 		klog.CtxErrorf(ctx, "修改或创建用户%d->视频%d的点赞错误，原因：%v", req.GetUserId(), req.GetVideoId(), err)
 		return resp, err
@@ -317,6 +329,18 @@ func (s *VideoImpl) FavoriteVideoStatus(ctx context.Context, req *video.Favorite
 
 // UnFavoriteVideoStatus implements the VideoImpl interface.
 func (s *VideoImpl) UnFavoriteVideoStatus(ctx context.Context, req *video.FavoriteVideoReq) (resp *video.FavoriteVideoResp, err error) {
+	var f Favorite
+	resp = &video.FavoriteVideoResp{}
+	err = Db.Where(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId()}).First(&f).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		klog.CtxErrorf(ctx, "修改或创建用户%d->视频%d的点赞错误，原因：%v", req.GetUserId(), req.GetVideoId(), err)
+		resp.IsSuccess = false
+		return
+	}
+	if !f.IsFavorite {
+		resp.IsSuccess = false
+		return resp, errors.New("不能重复取消点赞")
+	}
 	err = Db.Where(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId()}).Assign(map[string]any{
 		"is_favorite": false,
 	}).FirstOrCreate(&Favorite{VideoId: req.GetVideoId(), UserId: req.GetUserId(), IsFavorite: false}).Error

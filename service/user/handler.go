@@ -198,10 +198,23 @@ func (s *UserImpl) GetFriendList(ctx context.Context, req *user.GetFriendListReq
 
 // FollowStatus implements the UserImpl interface.
 func (s *UserImpl) FollowStatus(ctx context.Context, req *user.FollowReq) (resp *user.FollowResp, err error) {
+	// 先查询是否关注
+	var f Follow
+	resp = &user.FollowResp{}
+	err = Db.Where(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId()}).First(&f).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		klog.CtxErrorf(ctx, "查找用户%d->用户%d的关注关系错误，原因：%v", req.GetFollowerId(), req.GetFollowId(), err)
+		resp.IsSuccess = false
+		return
+	}
+	if f.IsFollow {
+		resp.IsSuccess = false
+		return resp, errors.New("不能重复关注")
+	}
 	err = Db.Where(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId()}).Assign(map[string]any{
 		"is_follow": true,
 	}).FirstOrCreate(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId(), IsFollow: true}).Error
-	resp = &user.FollowResp{}
+
 	if err != nil {
 		klog.CtxErrorf(ctx, "修改或创建用户%d->用户%d的关注关系错误，原因：%v", req.GetFollowerId(), req.GetFollowId(), err)
 		resp.IsSuccess = false
@@ -253,6 +266,19 @@ func (s *UserImpl) FollowStatus(ctx context.Context, req *user.FollowReq) (resp 
 
 // UnFollowStatus implements the UserImpl interface.
 func (s *UserImpl) UnFollowStatus(ctx context.Context, req *user.FollowReq) (resp *user.FollowResp, err error) {
+	// 先查询是否关注
+	var f Follow
+	resp = &user.FollowResp{}
+	err = Db.Where(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId()}).First(&f).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		klog.CtxErrorf(ctx, "查找用户%d->用户%d的关注关系错误，原因：%v", req.GetFollowerId(), req.GetFollowId(), err)
+		resp.IsSuccess = false
+		return
+	}
+	if !f.IsFollow {
+		resp.IsSuccess = false
+		return resp, errors.New("不能重复取消关注")
+	}
 	err = Db.Where(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId()}).Assign(map[string]any{
 		"is_follow": false,
 	}).FirstOrCreate(&Follow{FollowId: req.GetFollowId(), FollowerId: req.GetFollowerId(), IsFollow: false}).Error

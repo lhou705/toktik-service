@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
@@ -96,10 +97,18 @@ func (v *VideoHandler) SetFavoriteStatus(ctx context.Context, c *app.RequestCont
 			VideoId: videoId,
 		})
 		if err != nil {
-			c.JSON(http.StatusOK, common.BaseResponse{
-				StatusCode: common.ReqError,
-				StatusMsg:  "点赞时出现错误",
-			})
+			if errors.Is(err, errors.New("不能重复点赞")) {
+				c.JSON(http.StatusOK, common.BaseResponse{
+					StatusCode: common.ReqError,
+					StatusMsg:  err.Error(),
+				})
+			} else {
+				c.JSON(http.StatusOK, common.BaseResponse{
+					StatusCode: common.ReqError,
+					StatusMsg:  "点赞时出现错误",
+				})
+			}
+
 			hlog.CtxErrorf(ctx, "点赞时出现错误，原因：%v", err)
 			return
 		}
@@ -116,10 +125,17 @@ func (v *VideoHandler) SetFavoriteStatus(ctx context.Context, c *app.RequestCont
 			VideoId: videoId,
 		})
 		if err != nil {
-			c.JSON(http.StatusOK, common.BaseResponse{
-				StatusCode: common.ReqError,
-				StatusMsg:  "取消点赞时出现错误",
-			})
+			if errors.Is(err, errors.New("不能重复取消点赞")) {
+				c.JSON(http.StatusOK, common.BaseResponse{
+					StatusCode: common.ReqError,
+					StatusMsg:  err.Error(),
+				})
+			} else {
+				c.JSON(http.StatusOK, common.BaseResponse{
+					StatusCode: common.ReqError,
+					StatusMsg:  "取消点赞时出现错误",
+				})
+			}
 			hlog.CtxErrorf(ctx, "取消点赞时出现错误，原因：%v", err)
 			return
 		}
