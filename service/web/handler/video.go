@@ -284,9 +284,10 @@ func (v *VideoHandler) Publish(ctx context.Context, c *app.RequestContext) {
 		hlog.CtxErrorf(ctx, "获取用户%d投递的文件%s错误%v", userId, title, err)
 		return
 	}
-	filename := fmt.Sprintf("%d%s", time.Now().Unix(), path.Ext(data.Filename))
+	now := time.Now().Unix()
+	filename := fmt.Sprintf("%d%s", now, path.Ext(data.Filename))
 	playKey := fmt.Sprintf("play/" + filename)
-	coverKey := fmt.Sprintf("cover/%d.jpg", time.Now().Unix())
+	coverKey := fmt.Sprintf("cover/%d.jpg", now)
 	go func() {
 		err = c.SaveUploadedFile(data, "/tmp/"+filename)
 		if err != nil {

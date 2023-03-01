@@ -17,25 +17,15 @@ func JWT(ctx context.Context, c *app.RequestContext) {
 	if strings.Contains(c.Request.URI().String(), "/publish/action/") {
 		token = c.PostForm("token")
 	}
-	if len(token) == 0 {
-		// 白名单
+
+	claims, err := utils.ParseToken(token)
+	if err != nil || claims == nil {
 		if strings.Contains(c.Request.URI().String(), "/feed/") ||
 			strings.Contains(c.Request.URI().String(), "/comment/list/") {
 			c.Set("id", 0)
 			c.Next(ctx)
 			return
-		} else {
-			c.Abort()
-			c.JSON(http.StatusOK, common.BaseResponse{
-				StatusCode: common.NotLogin,
-				StatusMsg:  "登陆后使用",
-			})
-			return
 		}
-	}
-
-	claims, err := utils.ParseToken(token)
-	if err != nil || claims == nil {
 		c.Abort()
 		c.JSON(http.StatusOK, common.BaseResponse{
 			StatusCode: common.LoginStatusExpired,
