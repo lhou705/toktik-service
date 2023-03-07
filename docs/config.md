@@ -30,6 +30,11 @@
     },
     "video": {
       "name": "toktik.video"
+    },
+    "cos": {
+      "addr": "your cos addr",
+      "secretId": "your secretId",
+      "secretKey": "your secretKey"
     }
   }
 }
@@ -59,19 +64,7 @@
   "server": "同用户、信息模块配置文件",
   "mysql": "同用户、信息模块配置文件",
   "cos": {
-    "name": "对象存储的服务名称",
     "cdnAddr": "cdn加速域名"
   }
-}
-```
-### 腾讯云对象存储配置文件`toktik_cos.config.json`
-```json lines
-{
-  "cos": {
-    "addr": "腾讯云对象存储访问域名",
-    "secretID": "访问Id",
-    "secretKey": "访问密钥"
-  },
-  "server": "同用户、信息模块配置文件"
 }
 ```
